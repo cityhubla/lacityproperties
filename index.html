@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>LA City Property Map</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+	<link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic' rel='stylesheet' type='text/css'>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.8.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.8.1/mapbox-gl.css' rel='stylesheet' />
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.js"></script>
+</head>    
+    
+    
+<body>
+	<div id="map"></div>
+
+	<script>
+            
+
+            //Server Address will change every month
+			var mapDiv = 'map';
+            var lacityprop= "http://104.236.162.144:8000/lacityprop/";
+            var lacitycpa="http://104.236.162.144:8000/la_cpa/";
+            var bkbackground="#4f4d4d";
+            
+            //Change Button Color
+            function changestyle(var1, btn){
+                var year=var1;
+                if (map.hasClass(year)) {
+                    $(btn).removeAttr('style');
+                    map.removeClass(year);
+                    
+                } else {
+                    map.addClass(year);
+                    $(btn).css('opacity', '.5');
+                    }
+            } 
+            
+            //Show About Information
+            function aboutfunc(box){
+            $(box).toggle();
+            }; 
+        
+        
+
+            
+			var mapStyle = {
+				  "version": 7,
+				  "sources": {
+                    "mapbox": {
+                    "type": "vector",
+                    "url": "mapbox://mapbox.mapbox-terrain-v2,mapbox.mapbox-streets-v6"
+                    },  
+                    "lacityprop": {
+				      "type": "vector",
+				      "url": "" + lacityprop + "meta.json?vectortileflag=true"
+				    },  
+                    "lacity_cpa": {
+				      "type": "vector",
+				      "url": "" + lacitycpa + "meta.json?vectortileflag=true"
+				    },  
+                       "stamen": {
+                        "type": "raster",
+                        "tiles": ["https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.png"],
+                        "tileSize": 256 
+                    }          
+				  },
+                    "sprite": "https://www.mapbox.com/mapbox-gl-styles/sprites/outdoors",
+                    "glyphs": "mapbox://fontstack/{fontstack}/{range}.pbf",
+                    "layers": [
+					  /*{
+                        "id": "background",
+                        "type": "background",
+                        "paint": {
+                                "background-color": "#000"},
+                        "paint.divback":  {
+                                "background-color": "#FFF"}
+                        },*/
+                      {
+                        "id": "stamentiles",
+                        "type": "raster",
+                        "source": "stamen",
+                       "paint": {
+					      "raster-opacity": .25    
+                       }
+                      },
+                       {
+                        "id": "lacityoutline", 
+					    "source": "lacity_cpa",
+					    "source-layer": "la_cpa",
+					    "paint": {
+                            "fill-color": "#000",
+                            "fill-opacity":.1
+					    },
+					    "type": "fill",
+                        "interactive":true
+					  },
+                       {
+                        "id": "lacpa", 
+					    "source": "lacity_cpa",
+					    "source-layer": "la_cpa",
+					    "paint": {
+                            "line-width":2,
+                            "line-color": "#000",
+                            "line-dasharray": [2, 4],
+					    },
+					    "type": "line",
+                        "interactive":true
+					  },
+                       {
+                        "id": "lacity", 
+					    "source": "lacityprop",
+					    "source-layer": "lacityproperties",
+					    "paint": {
+					      "fill-color": "#85D69B",
+                            "fill-opacity":1
+					    },
+					    "type": "fill",
+                        "interactive":true
+					  }
+				  ]
+			};
+
+            
+mapboxgl.accessToken = 'pk.eyJ1IjoiY3J1emluNzN2dyIsImEiOiI3RDdhUi1NIn0.jaEqREZw7QQMRafKPNBdmA';
+var map = new mapboxgl.Map({
+  container: 'map', // container id
+  style: mapStyle, //stylesheet location
+  center: [34.0267,-118.2621], // starting position
+  zoom: 12, // starting zoom
+  minZoom: 11,
+  hash: true
+});
+
+        /*
+map.on('mousemove', function(e) {
+      map.featuresAt(e.point, {radius: 5}, function(err, features) {
+          if (err) throw err;
+          document.getElementById('builtbox').innerHTML = "ADDRESS: "+features[0].properties.SitusConca+"<br>PROPERTY USE: "+features[0].properties.UseCodeD_1+" <br># OF UNITS: "+features[0].properties.Units;
+      });
+  });
+*/
+
+map.on('click', function(e) {
+
+      map.featuresAt(e.point, {radius: 1}, function(err, features) {
+          map.easeTo({center:map.unproject(e.point)});
+          if (features[0].properties.SitusConca==null){
+        document.getElementById('builtbox').innerHTML = "Click on a property";
+          } else {
+          document.getElementById('builtbox').innerHTML = "<div><img src='http://maps.googleapis.com/maps/api/streetview?size=571x200&location="+features[0].geometry.coordinates[0][0][1]+","+features[0].geometry.coordinates[0][0][0]+"&key=AIzaSyAEjGc0IbjncA-YzKrpiTBHRhELUrruHao'></div>"+"<div><b>ADDRESS: "+features[0].properties.SitusConca+"<br>PROPERTY USE: "+features[0].properties.UseCodeD_1+" <br># OF UNITS: "+features[0].properties.Units+"</div>";}
+      });
+  });
+
+	</script>
+</body>
+</html>
